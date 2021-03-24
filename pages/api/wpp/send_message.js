@@ -8,7 +8,7 @@ export default (req, res) => {
 	verifyJWT(req, res)
 	let { messages, webhook, session } = req.body
 
-	// const wpp = new WppClient({ puppeteer: { headless: true }, session })
+	const wpp = new WppClient({ puppeteer: { headless: true }, session })
 
 	// if (!session) {
 	// 	wpp.on('qr', qr => {
@@ -23,7 +23,7 @@ export default (req, res) => {
 	// 	sendMessages(messages, wpp, webhook)
 	// })
 
-	// wpp.initialize()
+	wpp.initialize()
 	return res.status(202).send("Accepted")
 }
 
