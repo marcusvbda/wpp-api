@@ -9,7 +9,7 @@ export default (req, res) => {
 	let { messages, webhook, session } = req.body
 
 	try {
-		const wpp = new WppClient({ puppeteer: { headless: true }, session })
+		const wpp = new WppClient({ puppeteer: { headless: proccess.env.HEADLESS || false }, session })
 
 		if (!session) {
 			wpp.on('qr', qr => {
