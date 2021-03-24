@@ -8,23 +8,27 @@ export default (req, res) => {
 	verifyJWT(req, res)
 	let { messages, webhook, session } = req.body
 
-	const wpp = new WppClient({ puppeteer: { headless: true }, session })
+	try {
+		const wpp = new WppClient({ puppeteer: { headless: true }, session })
 
-	// if (!session) {
-	// 	wpp.on('qr', qr => {
-	// 		axios.post(webhook, { event: "qr", data: qr })
-	// 	})
+		if (!session) {
+			wpp.on('qr', qr => {
+				axios.post(webhook, { event: "qr", data: qr })
+			})
 
-	// 	wpp.on('authenticated', (session) => {
-	// 		axios.post(webhook, { event: "authenticated", data: JSON.stringify(session) })
-	// 	})
-	// }
-	// wpp.on('ready', async () => {
-	// 	sendMessages(messages, wpp, webhook)
-	// })
+			wpp.on('authenticated', (session) => {
+				axios.post(webhook, { event: "authenticated", data: JSON.stringify(session) })
+			})
+		}
+		wpp.on('ready', async () => {
+			sendMessages(messages, wpp, webhook)
+		})
 
-	wpp.initialize()
-	return res.status(202).send("Accepted")
+		wpp.initialize()
+		return res.status(202).send("Accepted")
+	} catch (er) {
+		return res.status(500).send(err)
+	}
 }
 
 
