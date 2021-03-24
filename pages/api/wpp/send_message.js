@@ -1,13 +1,13 @@
-const { verifyJWT } = require("@middlewares/jwt")
-const { default: axios } = require("axios")
-const express = require('express')
-const router = express()
-router.use(express.json())
+const verifyJWT = require("../verifyToken")
+const axios = require("axios")
 const WppClient = require('whatsapp_engine_js')
 const { MessageMedia } = require('whatsapp_engine_js/src/structures')
 
-router.post('/send-message', verifyJWT, (req, res) => {
+export default (req, res) => {
+	if (req.method != 'POST') return res.status(405).send("Method Not Allowed")
+	verifyJWT(req, res)
 	let { messages, webhook, session } = req.body
+
 	const wpp = new WppClient({ puppeteer: { headless: true }, session })
 
 	if (!session) {
@@ -24,8 +24,9 @@ router.post('/send-message', verifyJWT, (req, res) => {
 	})
 
 	wpp.initialize()
-	res.sendStatus(202)
-})
+	return res.status(202).send("Accepted")
+}
+
 
 const sendFile = async (message, account, wpp, type) => {
 	const mimes = {
@@ -68,5 +69,3 @@ const sendMessages = async (messages, wpp, webhook) => {
 	}
 	axios.post(webhook, { event: "sent_message", data })
 }
-
-module.exports = router
