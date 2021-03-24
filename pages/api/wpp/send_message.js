@@ -5,25 +5,25 @@ const { MessageMedia } = require('whatsapp_engine_js/src/structures')
 
 export default (req, res) => {
 	if (req.method != 'POST') return res.status(405).send("Method Not Allowed")
-	verifyJWT(req, res)
-	let { messages, webhook, session } = req.body
+	// verifyJWT(req, res)
+	// let { messages, webhook, session } = req.body
 
-	const wpp = new WppClient({ puppeteer: { headless: true }, session })
+	// const wpp = new WppClient({ puppeteer: { headless: true }, session })
 
-	if (!session) {
-		wpp.on('qr', qr => {
-			axios.post(webhook, { event: "qr", data: qr })
-		})
+	// if (!session) {
+	// 	wpp.on('qr', qr => {
+	// 		axios.post(webhook, { event: "qr", data: qr })
+	// 	})
 
-		wpp.on('authenticated', (session) => {
-			axios.post(webhook, { event: "authenticated", data: JSON.stringify(session) })
-		})
-	}
-	wpp.on('ready', async () => {
-		sendMessages(messages, wpp, webhook)
-	})
+	// 	wpp.on('authenticated', (session) => {
+	// 		axios.post(webhook, { event: "authenticated", data: JSON.stringify(session) })
+	// 	})
+	// }
+	// wpp.on('ready', async () => {
+	// 	sendMessages(messages, wpp, webhook)
+	// })
 
-	wpp.initialize()
+	// wpp.initialize()
 	return res.status(202).send("Accepted")
 }
 
