@@ -1,36 +1,31 @@
-const verifyJWT = require("../verifyToken")
-const axios = require("axios")
+const { verifyJWT } = require("@middlewares/jwt")
+const { default: axios } = require("axios")
+const express = require('express')
+const router = express()
+router.use(express.json())
 const WppClient = require('whatsapp_engine_js')
 const { MessageMedia } = require('whatsapp_engine_js/src/structures')
 
-export default (req, res) => {
-	if (req.method != 'POST') return res.status(405).send("Method Not Allowed")
-	verifyJWT(req, res)
+router.post('/send-message', verifyJWT, (req, res) => {
 	let { messages, webhook, session } = req.body
+	const wpp = new WppClient({ puppeteer: { headless: true }, session })
 
-	try {
-		const wpp = new WppClient({ puppeteer: { headless: proccess.env.HEADLESS || false }, session })
-
-		if (!session) {
-			wpp.on('qr', qr => {
-				axios.post(webhook, { event: "qr", data: qr })
-			})
-
-			wpp.on('authenticated', (session) => {
-				axios.post(webhook, { event: "authenticated", data: JSON.stringify(session) })
-			})
-		}
-		wpp.on('ready', async () => {
-			sendMessages(messages, wpp, webhook)
+	if (!session) {
+		wpp.on('qr', qr => {
+			axios.post(webhook, { event: "qr", data: qr })
 		})
 
-		wpp.initialize()
-		return res.status(202).send("Accepted")
-	} catch (er) {
-		return res.status(500).send(err)
+		wpp.on('authenticated', (session) => {
+			axios.post(webhook, { event: "authenticated", data: JSON.stringify(session) })
+		})
 	}
-}
+	wpp.on('ready', async () => {
+		sendMessages(messages, wpp, webhook)
+	})
 
+	wpp.initialize()
+	res.sendStatus(202)
+})
 
 const sendFile = async (message, account, wpp, type) => {
 	const mimes = {
@@ -73,3 +68,5 @@ const sendMessages = async (messages, wpp, webhook) => {
 	}
 	axios.post(webhook, { event: "sent_message", data })
 }
+
+module.exports = router
