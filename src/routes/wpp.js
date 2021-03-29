@@ -8,18 +8,29 @@ const { MessageMedia } = require('whatsapp_engine_js/src/structures')
 
 router.post('/send-message', verifyJWT, (req, res) => {
 	let { messages, webhook, session } = req.body
+	if (!messages) {
+		res.status(500).json({ error: "Messages parameter is required" })
+	}
 	const wpp = new WppClient({ puppeteer: { headless: true }, session })
 
 	if (!session) {
 		wpp.on('qr', qr => {
-			axios.post(webhook, { event: "qr", data: qr })
+			console.log("qr", qr)
+			if (webhook) {
+				axios.post(webhook, { event: "qr", data: qr })
+			}
 		})
 
 		wpp.on('authenticated', (session) => {
-			axios.post(webhook, { event: "authenticated", data: JSON.stringify(session) })
+			session = JSON.stringify(session)
+			console.log("authenticated", session)
+			if (webhook) {
+				axios.post(webhook, { event: "authenticated", data: session })
+			}
 		})
 	}
 	wpp.on('ready', async () => {
+		console.log("ready")
 		sendMessages(messages, wpp, webhook)
 	})
 
@@ -59,14 +70,16 @@ const sendMessages = async (messages, wpp, webhook) => {
 	for (let i in messages) {
 		let message = messages[i]
 		let account = await wpp.getAccountId(message.number)
-		if (account.isValid) {
+		if (account.isValid && message.message) {
 			await messageTypes[message.type.trim().toLowerCase()](account, message, wpp)
 			data.sent.push(message)
 		} else {
 			data.failed.push(message)
 		}
 	}
-	axios.post(webhook, { event: "sent_message", data })
+	if (webhook) {
+		axios.post(webhook, { event: "sent_message", data })
+	}
 }
 
 module.exports = router
