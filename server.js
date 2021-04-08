@@ -4,7 +4,7 @@ const app = express()
 app.use(express.json())
 
 app.get('/', (req, res) => {
-	res.send("Versão 1.0.5")
+	res.send("1.0.5")
 })
 
 app.use('/auth', require("@routes/auth"))
