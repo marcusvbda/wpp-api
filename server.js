@@ -4,13 +4,7 @@ const app = express()
 app.use(express.json())
 
 app.get('/', (req, res) => {
-	res.send("api working...")
-})
-
-app.post('/webhook-simulate', (req, res) => {
-	let { event, data } = req.body
-	console.log("webhook-simulate", event, data)
-	return res.sendStatus(202)
+	res.send("api version 1.0.5 working...")
 })
 
 app.use('/auth', require("@routes/auth"))

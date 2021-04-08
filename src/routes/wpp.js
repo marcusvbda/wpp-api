@@ -6,6 +6,43 @@ router.use(express.json())
 const WppClient = require('whatsapp_engine_js')
 const { MessageMedia } = require('whatsapp_engine_js/src/structures')
 
+const sessionStart = (wpp, session, webhook) => {
+	if (!session) {
+		wpp.on('qr', qr => {
+			if (webhook) {
+				axios.post(webhook, { event: "qr", data: qr })
+				// .then(resp => console.log(resp.data)).catch(er => console.log(er))
+			}
+		})
+
+		wpp.on('qr_scanned', () => {
+			if (webhook) {
+				axios.post(webhook, { event: "qr_scanned", data: {} })
+				// .then(resp => console.log(resp.data)).catch(er => console.log(er))
+			}
+		})
+
+		wpp.on('authenticated', (session) => {
+			session = JSON.stringify(session)
+			if (webhook) {
+				axios.post(webhook, { event: "authenticated", data: session })
+				// .then(resp => console.log(resp.data)).catch(er => console.log(er))
+			}
+		})
+	}
+}
+
+router.post('/check-session', verifyJWT, (req, res) => {
+	let { webhook, session } = req.body
+	const wpp = new WppClient({ puppeteer: { headless: true }, session })
+
+	sessionStart(wpp, session, webhook)
+
+	wpp.initialize()
+	res.sendStatus(202)
+})
+
+
 router.post('/send-message', verifyJWT, (req, res) => {
 	let { messages, webhook, session } = req.body
 	if (!messages) {
@@ -13,26 +50,9 @@ router.post('/send-message', verifyJWT, (req, res) => {
 	}
 	const wpp = new WppClient({ puppeteer: { headless: true }, session })
 
-	if (!session) {
-		wpp.on('qr', qr => {
-			console.log("qr", qr)
-			if (webhook) {
-				axios.post(webhook, { event: "qr", data: qr })
-			}
-		})
+	sessionStart(wpp, session, webhook)
 
-		wpp.on('authenticated', (session) => {
-			session = JSON.stringify(session)
-			console.log("authenticated", session)
-			if (webhook) {
-				axios.post(webhook, { event: "authenticated", data: session })
-			}
-		})
-	}
-	wpp.on('ready', async () => {
-		console.log("ready")
-		sendMessages(messages, wpp, webhook)
-	})
+	wpp.on('ready', async () => sendMessages(messages, wpp, webhook))
 
 	wpp.initialize()
 	res.sendStatus(202)
