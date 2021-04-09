@@ -59,7 +59,7 @@ router.post('/send-message', verifyJWT, (req, res) => {
 	if (!messages) {
 		res.status(500).json({ error: "Messages parameter is required" })
 	}
-	const wpp = new WppClient({ puppeteer: { headless: false }, session })
+	const wpp = new WppClient({ puppeteer: { headless: true }, session })
 	sessionStart(wpp, session, webhook)
 
 	wpp.on('ready', async () => sendMessages(messages, wpp, webhook))
