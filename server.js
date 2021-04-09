@@ -3,8 +3,8 @@ const express = require('express')
 const app = express()
 app.use(express.json())
 
-app.get('/', (req, res) => {
-	res.send("1.0.5")
+app.all('/', (req, res) => {
+	res.status(200).json("1.0.5")
 })
 
 app.use('/auth', require("@routes/auth"))
