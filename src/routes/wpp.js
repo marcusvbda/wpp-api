@@ -6,12 +6,12 @@ router.use(express.json())
 const WppClient = require('whatsapp_engine_js')
 const { MessageMedia } = require('whatsapp_engine_js/src/structures')
 
-const sessionStart = (wpp, session, webhook) => {
+const sessionStart = (wpp, session, webhook, back_param = null) => {
 	if (!session) {
 		wpp.on('qr', qr => {
 			console.log("qr")
 			if (webhook) {
-				axios.post(webhook, { event: "qr", data: qr })
+				axios.post(webhook, { event: "qr", data: qr, back_param })
 				// .then(resp => console.log(resp.data)).catch(er => console.log(er))
 			}
 		})
@@ -19,7 +19,7 @@ const sessionStart = (wpp, session, webhook) => {
 		wpp.on('qr_scanned', () => {
 			console.log("qr_scanned")
 			if (webhook) {
-				axios.post(webhook, { event: "qr_scanned", data: {} })
+				axios.post(webhook, { event: "qr_scanned", data: {}, back_param })
 				// .then(resp => console.log(resp.data)).catch(er => console.log(er))
 			}
 		})
@@ -29,7 +29,7 @@ const sessionStart = (wpp, session, webhook) => {
 		console.log("authenticated")
 		session = JSON.stringify(session)
 		if (webhook) {
-			axios.post(webhook, { event: "authenticated", data: session })
+			axios.post(webhook, { event: "authenticated", data: session, back_param })
 			// .then(resp => console.log(resp.data)).catch(er => console.log(er))
 		}
 	})
@@ -37,17 +37,17 @@ const sessionStart = (wpp, session, webhook) => {
 	wpp.on("auth_failure", () => {
 		console.log("auth_failure")
 		if (webhook) {
-			axios.post(webhook, { event: "auth_failure", data: session })
+			axios.post(webhook, { event: "auth_failure", data: session, back_param })
 			// .then(resp => console.log(resp.data)).catch(er => console.log(er))
 		}
 	})
 }
 
 router.post('/check-session', verifyJWT, (req, res) => {
-	let { webhook, session } = req.body
+	let { webhook, session, back_param } = req.body
 	const wpp = new WppClient({ puppeteer: { headless: true }, session })
 
-	sessionStart(wpp, session, webhook)
+	sessionStart(wpp, session, webhook, back_param)
 
 	wpp.initialize()
 	res.sendStatus(202)
@@ -55,12 +55,12 @@ router.post('/check-session', verifyJWT, (req, res) => {
 
 
 router.post('/send-message', verifyJWT, (req, res) => {
-	let { messages, webhook, session } = req.body
+	let { messages, webhook, session, back_param } = req.body
 	if (!messages) {
 		res.status(500).json({ error: "Messages parameter is required" })
 	}
 	const wpp = new WppClient({ puppeteer: { headless: true }, session })
-	sessionStart(wpp, session, webhook)
+	sessionStart(wpp, session, webhook, back_param)
 
 	wpp.on('ready', async () => sendMessages(messages, wpp, webhook))
 
