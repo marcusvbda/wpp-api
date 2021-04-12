@@ -104,7 +104,7 @@ const sendMessages = async (messages, wpp, webhook) => {
 			await messageTypes[message.type.trim().toLowerCase()](account, message, wpp)
 			data.sent.push(message)
 		} else {
-			data.failed.push(message)
+			data.failed.push({ ...message, error: "account id not found" })
 		}
 	}
 	if (webhook) {
